@@ -8,17 +8,29 @@ on:
 
 jobs:
   lint:
-    name: php -l
+    name: php -l (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
+    strategy:
+      # Test both the lowest supported version and the current LTS so a
+      # stray 8.1+ syntax in a file doesn't silently break PHP 8.0 users.
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.3']
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: ${{ matrix.php }}
           extensions: mbstring, pdo_sqlite, json
           coverage: none
+
+      # composer.lock is committed, so this is fast and exercises
+      # composer.json as a smoke test (typo, wrong constraint, missing
+      # dep, etc. all fail here instead of at deploy time).
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-scripts
 
       - name: Lint every PHP file
         run: |
