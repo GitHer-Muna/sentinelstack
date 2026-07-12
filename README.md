@@ -109,6 +109,8 @@ rm -f data/wellspring.sqlite
 php database/seed.php
 ```
 
+The same lint runs on every push and pull request via `.github/workflows/ci.yml`, so a syntax error in any PHP file fails the build before it can land.
+
 There's no test framework — `php -l` is the safety net. Every controller has an in-process HTTP path that you can hit from the browser to verify its behavior manually.
 
 ## Security
