@@ -1,0 +1,50 @@
+/* Wellspring — auth screens.
+   Folded out of pages.css into its own file because the auth templates
+   (templates/auth/login.php, templates/auth/register.php) explicitly
+   reference /assets/css/auth.css. Auth pages don't pull in layout.php,
+   so they need these styles to live somewhere the <head> can find.
+*/
+
+/* Centered card on a calm paper-and-sky ground. */
+.auth-body {
+  background:
+    radial-gradient(700px 400px at 18% 10%, rgba(168,197,214,0.18), transparent 70%),
+    radial-gradient(700px 400px at 88% 92%, rgba(217,142,115,0.14), transparent 70%),
+    var(--cream);
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--s-5);
+}
+
+[data-theme="dark"] .auth-body {
+  background:
+    radial-gradient(700px 400px at 18% 10%, rgba(168,197,214,0.06), transparent 70%),
+    radial-gradient(700px 400px at 88% 92%, rgba(217,142,115,0.05), transparent 70%),
+    var(--cream);
+}
+
+.auth-shell { width: 100%; max-width: 460px; }
+.auth-card  { background: var(--surface); padding: var(--s-6); border-radius: var(--r-xl); box-shadow: var(--shadow-2); }
+.auth-card.wide { max-width: 540px; margin: 0 auto; }
+
+.auth-head {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.5rem;
+  margin-bottom: var(--s-5);
+  text-align: center;
+}
+.auth-head h1 { font-size: 1.7rem; }
+.auth-head .eyebrow { text-align: center; }
+
+.auth-foot {
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: var(--s-5);
+}
+
+.auth-soft-note { text-align: center; max-width: 38ch; margin: 0 auto; line-height: 1.55; font-size: 0.92em; }
+
+/* Honor the OS-level "reduce motion" preference for the auth backgrounds. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-body { background: var(--cream); }
+}

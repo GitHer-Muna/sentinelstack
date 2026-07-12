@@ -1,0 +1,27 @@
+# Wellspring front controller
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Allow direct access to existing files and directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Everything else goes through index.php
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Block access to sensitive files
+<FilesMatch "\.(env|sqlite|sqlite3|sql|md)$">
+    Require all denied
+</FilesMatch>
+
+# Disable directory listings
+Options -Indexes
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

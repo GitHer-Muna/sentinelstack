@@ -1,0 +1,17 @@
+# dependencies
+/vendor/
+
+# data (sqlite, logs)
+/data/
+*.sqlite
+*.sqlite-journal
+
+# environment
+.env
+
+# editor + OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,297 @@
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-1);
+  transition: box-shadow var(--t-base);
+}
+.card:hover { box-shadow: var(--shadow-2); }
+
+.card.wide .form-grid { grid-template-columns: 1.4fr 1fr; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  padding: 0.62rem 1.1rem;
+  border-radius: var(--r-md);
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.005em;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+}
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  background: var(--terracotta);
+  /* Dark text on warm terracotta = 5.13:1 (AA). White on this terracotta is only 2.6:1. */
+  color: var(--charcoal);
+}
+.btn-primary:hover {
+  /* Subtle darken via filter, not bg swap, so the text color doesn't flip mid-hover (jarring). */
+  background: var(--terracotta);
+  color: var(--charcoal);
+  filter: brightness(0.94);
+}
+.btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(138,77,49,0.35); } /* matches the new --terracotta-700 #8a4d31 */
+
+.btn-secondary {
+  /* sage-600 + white = 4.84:1 (AA). sage-500 + white was 3.11:1 (fail). */
+  background: var(--sage-600);
+  color: white;
+}
+.btn-secondary:hover { background: var(--sage-700); } /* 6.77:1 — deeper on hover */
+
+.btn-ghost {
+  background: var(--cream-50);
+  color: var(--text);
+  border-color: var(--border-soft);
+}
+.btn-ghost:hover { background: var(--cream-100); }
+.btn-ghost.is-done { background: var(--sage-100); color: var(--sage-700); border-color: var(--sage-200); }
+
+.btn-link { color: var(--text-muted); padding: 0.4rem 0.6rem; }
+.btn-link:hover { color: var(--text); }
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--terracotta-700);
+  color: var(--terracotta-700);
+}
+.btn-danger:hover { background: var(--terracotta-700); color: white; }
+
+.btn-block { width: 100%; }
+
+.link {
+  color: var(--sage-600);
+  text-decoration: underline;
+  text-decoration-color: rgba(124,152,133,0.4);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--t-fast), color var(--t-fast);
+}
+.link:hover { text-decoration-color: currentColor; }
+
+.link-btn {
+  background: none; border: 0; padding: 0;
+  color: var(--text-muted); cursor: pointer;
+  transition: color var(--t-fast);
+}
+.link-btn:hover { color: var(--text); }
+
+.link-danger { color: var(--terracotta-700); }
+.link-danger:hover { color: var(--text); }
+
+.link.subtle { text-decoration: none; color: var(--text-muted); font-size: 0.92em; }
+.link.subtle:hover { color: var(--terracotta); }
+
+/* Form fields */
+.form-stack { display: flex; flex-direction: column; gap: var(--s-4); }
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+}
+.form-grid > .span-2 { grid-column: 1 / -1; }
+
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+
+.field { display: flex; flex-direction: column; gap: 0.35rem; }
+.field-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+.field-hint  { font-size: 0.8rem; color: var(--text-muted); }
+
+.field-input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  background: var(--cream-50);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0.65rem 0.85rem;
+  font: inherit;
+  width: 100%;
+  transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+}
+[data-theme="dark"] .field-input,
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--cream-100);
+}
+.field-input:hover,
+input:hover, select:hover, textarea:hover { border-color: var(--sage-300); }
+.field-input:focus,
+input:focus, select:focus, textarea:focus {
+  border-color: var(--sage-500);
+  background: var(--surface);
+}
+
+textarea { resize: vertical; min-height: 4rem; }
+
+.form-actions { grid-column: 1 / -1; display: flex; gap: var(--s-3); justify-content: flex-end; padding-top: var(--s-2); }
+
+/* Fieldset "type" radio group */
+.type-toggle { border: 0; padding: 0; margin: 0; display: flex; gap: var(--s-4); }
+.type-toggle .field-label { padding: 0 0 0.3rem 0; width: 100%; }
+.type-toggle label {
+  display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer;
+  padding: 0.45rem 0.85rem; border: 1px solid var(--border);
+  border-radius: 999px; transition: background var(--t-fast), border-color var(--t-fast);
+}
+.type-toggle label:hover { background: var(--cream-50); border-color: var(--sage-300); }
+.type-toggle input { accent-color: var(--sage-500); }
+
+/* Mood chip face */
+.mood-set { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--s-3); }
+@media (max-width: 600px) { .mood-set { grid-template-columns: repeat(5, minmax(0,1fr)); } }
+.mood-option {
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  padding: 0.65rem 0.4rem; border: 1px solid var(--border);
+  border-radius: var(--r-md); cursor: pointer; transition: background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+  text-align: center;
+}
+.mood-option:hover { background: var(--cream-50); border-color: var(--sage-300); }
+.mood-option input { position: absolute; opacity: 0; pointer-events: none; }
+.mood-option input:checked ~ .mood-face { box-shadow: 0 0 0 3px var(--sage-500); }
+.mood-option input:checked ~ .mood-label { color: var(--text); }
+.mood-option .mood-face {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--cream-100); display: inline-block;
+  position: relative; transition: box-shadow var(--t-fast);
+}
+.mood-option .mood-label { font-size: 0.85rem; color: var(--text-muted); }
+
+.mood-face[data-mood="great"] { background: radial-gradient(circle at 50% 60%, var(--sage-300) 35%, var(--sage-500) 36% 60%, transparent 61%); }
+.mood-face[data-mood="great"]::after { content: ""; position: absolute; left: 8px; top: 11px; width: 5px; height: 5px; background: var(--charcoal); border-radius: 50%; box-shadow: 13px 0 0 var(--charcoal); }
+.mood-face[data-mood="good"]  { background: var(--sky-100); }
+.mood-face[data-mood="good"]::after  { content: ""; position: absolute; left: 9px; top: 12px; width: 4px; height: 4px; background: var(--charcoal); border-radius: 50%; box-shadow: 12px 0 0 var(--charcoal); }
+.mood-face[data-mood="okay"]  { background: var(--cream-200); }
+.mood-face[data-mood="okay"]::after  { content: ""; position: absolute; left: 9px; top: 12px; width: 4px; height: 4px; background: var(--charcoal-2); border-radius: 50%; box-shadow: 12px 0 0 var(--charcoal-2); }
+.mood-face[data-mood="low"]   { background: var(--terracotta-100); }
+.mood-face[data-mood="low"]::after   { content: ""; position: absolute; left: 10px; top: 14px; width: 4px; height: 4px; background: var(--charcoal-2); border-radius: 50%; box-shadow: 10px 0 0 var(--charcoal-2); }
+.mood-face[data-mood="rough"] { background: var(--terracotta-300); }
+.mood-face[data-mood="rough"]::after { content: ""; position: absolute; left: 10px; top: 14px; width: 4px; height: 4px; background: var(--charcoal-2); border-radius: 50%; box-shadow: 10px 0 0 var(--charcoal-2); }
+
+.mood-dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; }
+.mood-dot.small { width: 12px; height: 12px; }
+.mood-dot[data-mood="great"] { background: var(--sage-500); }
+.mood-dot[data-mood="good"]  { background: var(--sky); }
+.mood-dot[data-mood="okay"]  { background: var(--cream-200); }
+.mood-dot[data-mood="low"]   { background: var(--terracotta-300); }
+.mood-dot[data-mood="rough"] { background: var(--terracotta); }
+
+/* Notice / error */
+.notice {
+  background: var(--success-bg); color: var(--success-fg);
+  padding: 0.7rem 1rem; border-radius: var(--r-md); border: 1px solid transparent;
+  margin-bottom: var(--s-4);
+}
+.error {
+  background: var(--error-bg); color: var(--error-fg);
+  padding: 0.7rem 1rem; border-radius: var(--r-md); border: 1px solid transparent;
+  margin-bottom: var(--s-4);
+}
+
+/* Chips */
+.chip {
+  display: inline-block; padding: 0.18rem 0.55rem; border-radius: 999px;
+  background: var(--cream-100); color: var(--text-muted); font-size: 0.78rem;
+  letter-spacing: 0.01em;
+}
+.chip-habit { background: var(--sky-100); color: var(--sky-700); }
+.chip-high { background: var(--terracotta-100); color: var(--terracotta-700); }
+.chip-med  { background: var(--cream-200); color: var(--text); }
+.chip-low  { background: var(--sage-100); color: var(--sage-700); }
+.chip-habit-daily  { background: var(--sage-100);  color: var(--sage-700); }
+.chip-habit-weekly { background: var(--sky-100);   color: var(--sky-700); }
+
+/* Live "preview chip" — recolored live as user toggles Daily vs Weekly */
+.preview-chip {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: var(--cream-100);
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+  transition: background var(--t-base), color var(--t-base);
+}
+.preview-chip[data-period="daily"]  { background: var(--sage-100); color: var(--sage-700); }
+.preview-chip[data-period="weekly"] { background: var(--sky-100);  color: var(--sky-700); }
+.preview-chip[data-hidden="true"]   { opacity: 0; visibility: hidden; }
+
+.check-toggle { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); cursor: pointer; }
+.check-toggle input { accent-color: var(--sage-500); }
+
+/* Date input wrapper — guarantees a visible calendar icon even on
+   browsers whose native <input type="date"> glyph is missing or too
+   faint. The icon is decorative; the native picker still opens when
+   the user clicks anywhere in the field or the icon. */
+.date-input-wrap {
+  position: relative;
+  display: block;
+}
+.date-input-wrap input[type="date"] {
+  padding-right: 2.75rem;
+  min-height: 2.75rem;
+}
+.date-input-icon {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  padding: 0.4rem;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+.date-input-wrap:hover .date-input-icon { color: var(--sage-600); }
+.date-input-wrap:focus-within .date-input-icon { color: var(--sage-700); }
+
+/* Quick date shortcuts — Today / Tomorrow / Next week / Clear.
+   Sit directly under the input so the field is obviously interactive. */
+.date-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: 0.4rem;
+}
+.date-quick__btn {
+  border: 1px solid var(--sage-200);
+  background: var(--cream-50);
+  color: var(--sage-700);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font: inherit;
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+.date-quick__btn:hover { background: var(--sage-100); border-color: var(--sage-400); }
+.date-quick__btn--clear {
+  border-color: var(--border-soft);
+  color: var(--text-muted);
+  background: transparent;
+}
+.date-quick__btn--clear:hover { background: var(--cream-100); color: var(--terracotta-700); border-color: var(--terracotta-300); }

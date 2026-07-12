@@ -1,0 +1,329 @@
+/* Wellspring — chrome UI.
+   The "meta UI": toasts, dialogs, empty slates, optimistic-UI states,
+   password strength meter, inline form errors. Always loaded on every page
+   so the vocabulary is consistent.
+
+   Honors prefers-reduced-motion: reduce (last block).
+*/
+
+/* ─── Spinner inside busy buttons ─────────────────────────────────────────── */
+.btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;
+  vertical-align: -2px;
+  margin-right: 0.35rem;
+}
+.btn-spinner-label { vertical-align: middle; }
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+.btn[aria-busy="true"] {
+  opacity: 0.85;
+  cursor: progress;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-spinner { animation-duration: 1.4s; }
+}
+
+/* ─── Toast ───────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--s-5);
+  transform: translate(-50%, 0);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  background: var(--surface-strong);
+  color: var(--text);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: 0.7rem 0.9rem 0.7rem 1rem;
+  box-shadow: var(--shadow-3);
+  font-size: 0.94rem;
+  max-width: min(560px, calc(100vw - 32px));
+  z-index: 1000;
+  animation: toast-in 320ms cubic-bezier(.2,.7,.2,1) both;
+}
+/* Stack any in-flight toasts vertically — new ones push older ones up.
+   The .toast--stacked class scopes the position override so a later
+   stylesheet that re-declares .toast can't accidentally clobber this. */
+.toast.toast--stacked {
+  bottom: auto;
+  top: calc(var(--s-5) + (var(--i, 0) * (3.4rem + var(--s-2))));
+}
+@media (max-width: 720px) {
+  .toast.toast--stacked {
+    top: calc(var(--s-4) + (var(--i, 0) * (3.4rem + var(--s-2))));
+    left: 50%;
+    right: auto;
+  }
+}
+.toast.leaving { animation: toast-out 240ms cubic-bezier(.2,.7,.2,1) both; }
+.toast--success { background: var(--success-bg); color: var(--success-fg); border-color: transparent; }
+.toast--error   { background: var(--error-bg);   color: var(--error-fg);   border-color: transparent; }
+.toast--info    { background: var(--cream-50);   color: var(--text); }
+.toast__icon { display: inline-flex; flex-shrink: 0; }
+.toast__msg  { flex: 1; line-height: 1.45; }
+.toast__close {
+  background: none; border: 0; padding: 0.2rem 0.4rem;
+  color: inherit; opacity: 0.6; cursor: pointer; font-size: 1.1rem; line-height: 1;
+  transition: opacity var(--t-fast);
+}
+.toast__close:hover { opacity: 1; }
+.toast__close:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px rgba(124,152,133,0.35); border-radius: var(--r-sm);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes toast-out {
+  to { opacity: 0; transform: translate(-50%, 12px); }
+}
+
+/* Visual badge inside toast body, like ✓ ⚠ ℹ as inline svg pseudo-decoration */
+.toast .badge-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.55; flex-shrink: 0; }
+
+/* Optional action button inside a toast (e.g. "Undo"). Sits between the
+   message and the close X. Matches the toast kind's color palette so it
+   reads as part of the toast, not a separate UI. */
+.toast__action {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  margin-right: 0.35rem;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background var(--t-fast);
+  flex-shrink: 0;
+}
+.toast__action:hover { background: rgba(0, 0, 0, 0.08); }
+[data-theme="dark"] .toast__action:hover { background: rgba(255, 255, 255, 0.08); }
+.toast__action:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(124,152,133,0.5); }
+
+/* ─── Confirm dialog (native <dialog>, themed) ───────────────────────────── */
+.confirm-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  max-width: 480px;
+  width: calc(100vw - 32px);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-3);
+  color: var(--text);
+}
+.confirm-dialog::backdrop {
+  background: rgba(26, 20, 18, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: backdrop-in 220ms cubic-bezier(.2,.7,.2,1) both;
+}
+.confirm-dialog__body {
+  background: var(--surface-strong);
+  padding: var(--s-5) var(--s-5) var(--s-5);
+  border-radius: var(--r-xl);
+  display: flex; flex-direction: column; gap: var(--s-4);
+}
+.confirm-dialog__title { font-family: var(--font-serif); font-size: 1.35rem; line-height: 1.25; margin: 0; }
+.confirm-dialog__msg   { color: var(--text-muted); line-height: 1.55; margin: 0; }
+.confirm-dialog__actions { display: flex; justify-content: flex-end; gap: var(--s-2); }
+.confirm-dialog[open] { animation: dialog-in 220ms cubic-bezier(.2,.7,.2,1) both; }
+
+@keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-in   { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
+
+/* ─── Form inline validation ─────────────────────────────────────────────── */
+.is-invalid,
+.is-invalid input,
+.is-invalid select,
+.is-invalid textarea {
+  border-color: var(--error-fg) !important;
+  background: var(--error-bg);
+  box-shadow: 0 0 0 3px rgba(153, 63, 42, 0.12);
+}
+.field-error {
+  display: block;
+  color: var(--error-fg);
+  font-size: 0.82rem;
+  margin-top: 0.25rem;
+  animation: field-error-in 220ms cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes field-error-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+.form-flash {
+  margin: 0 0 var(--s-4) 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-md);
+  background: var(--success-bg);
+  color: var(--success-fg);
+  border: 1px solid transparent;
+  animation: form-flash-in 320ms cubic-bezier(.2,.7,.2,1) both;
+}
+.form-flash--error { background: var(--error-bg); color: var(--error-fg); }
+@keyframes form-flash-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─── Empty slates ───────────────────────────────────────────────────────── */
+.empty-slate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--s-6) var(--s-4);
+  gap: var(--s-3);
+  border: 1px dashed var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  min-height: 8rem;
+}
+.empty-slate__icon { color: var(--sage-300); opacity: 0.85; }
+.empty-slate__icon svg { width: 44px; height: 44px; }
+.empty-slate__title {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--text);
+  margin: 0;
+}
+.empty-slate__body { margin: 0; line-height: 1.55; max-width: 44ch; }
+.empty-slate__cta  { margin-top: var(--s-2); }
+
+/* ─── Optimistic-UI states ───────────────────────────────────────────────── */
+.is-updating { opacity: 0.55; pointer-events: none; transition: opacity var(--t-fast); }
+.is-saving   { opacity: 0.85; pointer-events: none; }
+.is-deleting {
+  animation: row-out 280ms cubic-bezier(.2,.7,.2,1) forwards;
+  pointer-events: none;
+}
+@keyframes row-out {
+  to { opacity: 0; transform: translateX(-8px) scale(0.98); height: 0; padding-top: 0; padding-bottom: 0; margin: 0; border-width: 0; }
+}
+/* Entry animation used after a fresh, fast insert (todos hydration) */
+.is-inserted { animation: row-in 320ms cubic-bezier(.2,.7,.2,1) both; }
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─── Password strength meter ───────────────────────────────────────────── */
+.pw-strength { display: flex; align-items: center; gap: var(--s-2); margin-top: 0.4rem; }
+.pw-strength__bar {
+  flex: 1;
+  height: 6px;
+  background: var(--cream-100);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+.pw-strength__fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: var(--terracotta-300);
+  transition: width var(--t-base), background-color var(--t-base);
+}
+.pw-strength__label { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+.pw-strength[data-score="2"] .pw-strength__fill { width: 35%;  background: var(--terracotta-300); }
+.pw-strength[data-score="3"] .pw-strength__fill { width: 60%;  background: #E5C97E; }
+.pw-strength[data-score="4"] .pw-strength__fill { width: 85%;  background: var(--sage-400); }
+.pw-strength[data-score="5"] .pw-strength__fill { width: 100%; background: var(--sage-500); }
+.pw-strength[data-score="2"] .pw-strength__label { color: var(--terracotta-700); }
+.pw-strength[data-score="3"] .pw-strength__label { color: #8C7A3E; }
+.pw-strength[data-score="4"] .pw-strength__label,
+.pw-strength[data-score="5"] .pw-strength__label { color: var(--sage-700); }
+
+/* ─── sr-only utility (a11y) ─────────────────────────────────────────────── */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── Pulse for breath-circle phase transition + completion ───────────────── */
+@keyframes breathe-settle {
+  0%   { transform: scale(1.0);  }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1.0);  }
+}
+.breath-circle.is-pulse { animation: breathe-settle 600ms cubic-bezier(.2,.7,.2,1); }
+.breath-circle.is-done { animation: breathe-settle 1200ms cubic-bezier(.2,.7,.2,1); background: radial-gradient(circle at 50% 50%, var(--sage-300), var(--sage-500)); }
+[data-theme="dark"] .breath-circle.is-done { background: radial-gradient(circle at 50% 50%, var(--sage-400), var(--sage-600)); }
+
+/* ─── Top progress bar (NProgress-style) ─────────────────────────────────── */
+.top-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  width: 0%;
+  background: var(--sage-500);
+  z-index: 1100;
+  pointer-events: none;
+  box-shadow: 0 1px 4px rgba(124,152,133,0.35);
+  will-change: width;
+}
+.top-progress.is-fail {
+  background: var(--terracotta);
+  box-shadow: 0 1px 4px rgba(217,142,115,0.45);
+}
+.top-progress[hidden] { display: none; }
+
+/* ─── Offline / online banner ───────────────────────────────────────────── */
+.offline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 95;
+  background: var(--error-bg);
+  color: var(--error-fg);
+  text-align: center;
+  padding: 0.6rem 1rem;
+  font-size: 0.88rem;
+  border-bottom: 1px solid transparent;
+  animation: form-flash-in 240ms cubic-bezier(.2,.7,.2,1) both;
+}
+.offline-banner[hidden] { display: none; }
+.offline-banner__icon { vertical-align: -2px; margin-right: 0.4rem; }
+
+/* ─── Reduced-motion respect (kills animations, not transitions) ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .confirm-dialog[open],
+  .confirm-dialog::backdrop,
+  .field-error,
+  .form-flash,
+  .is-deleting,
+  .is-inserted,
+  .breath-circle.is-pulse,
+  .breath-circle.is-done,
+  .breath-circle.is-inhale,
+  .breath-circle.is-exhale,
+  .top-progress {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  /* Breath circle never scrimbles when reduced-motion is on */
+  .breath-circle { transition: none !important; }
+}
+
+

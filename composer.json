@@ -1,0 +1,20 @@
+{
+    "name": "wellspring/wellspring",
+    "description": "Wellspring — a self-hosted personal wellbeing web app",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.0",
+        "ext-pdo": "*",
+        "ext-pdo_sqlite": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/App/",
+            "Models\\": "src/Models/",
+            "Controllers\\": "src/Controllers/"
+        }
+    }
+}

@@ -1,0 +1,113 @@
+/* Wellspring — design tokens.
+   Sage & cream palette per spec. Patterns picked to keep a calm,
+   paper-like feel and to come back to the same single accent.
+*/
+
+:root {
+  /* Color */
+  --sage-50:  #EEF2EE;
+  --sage-100: #D8E2DA;
+  --sage-200: #B7C9BA;
+  --sage-300: #98AE9C;
+  --sage-400: #88A28C;
+  --sage-500: #7C9885;   /* primary */
+  --sage-600: #627a6b;
+  --sage-700: #4d615a;
+  --sage-800: #364640;
+
+  --cream-50:  #FBF8F2;
+  --cream:     #FAF6F0;   /* background */
+  --cream-100: #F1EBDF;
+  --cream-200: #EAE2D2;
+
+  --charcoal:    #2B2B2B; /* text */
+  --charcoal-2:  #3a3a3a;
+  --charcoal-3:  #4a4a4a;
+
+  --terracotta-100: #F2D8CB;
+  --terracotta-300: #E5B59F;
+  --terracotta:     #D98E73; /* accent */
+  --terracotta-700: #8a4d31;  /* darkened so chip-high (terracotta-100 bg + terracotta-700 fg) clears AA at 5.32:1 */
+
+  --sky-100: #DBE7EF;
+  --sky-300: #B7D2DD;
+  --sky:     #A8C5D6;       /* secondary */
+  --sky-700: #4d7281;  /* darkened to pass AA on sky-100 (chip-habit-weekly) */
+
+  --rose-soft: #E9A48D;
+  --olive:     #8C9659;
+
+  --surface:        #FFFFFF;
+  --surface-soft:   #FCFAF5;
+  --surface-strong: #FFFFFF;
+  --border-soft:    rgba(43,43,43,0.08);
+  --border:         rgba(43,43,43,0.14);
+  --text-muted:     #6b6b6b;
+  --text:           var(--charcoal);
+
+  --warn-bg:        #FBE9DE;
+  --warn-fg:        #8C4C2E;
+  --error-bg:       #FBE2DE;
+  --error-fg:       #993F2A;
+  --success-bg:     #DDEAE0;
+  --success-fg:     #3a6b51;
+
+  /* Type */
+  --font-serif: 'Fraunces', 'Iowan Old Style', Georgia,serif;
+  --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Spacing */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+
+  /* Radius / shadow / motion */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  --shadow-1: 0 1px 2px rgba(43,43,43,0.04);
+  --shadow-2: 0 4px 14px rgba(43,43,43,0.06);
+  --shadow-3: 0 8px 28px rgba(43,43,43,0.08);
+
+  --t-fast: 150ms cubic-bezier(.2,.7,.2,1);
+  --t-base: 200ms cubic-bezier(.2,.7,.2,1);
+  --t-slow: 250ms cubic-bezier(.2,.7,.2,1);
+}
+
+/* Dark theme — its own palette, not pure-black/inverted.
+   Deep sage-charcoal ground, cream lines, terracotta is still the accent. */
+[data-theme="dark"] {
+  --cream:        #1B2120;
+  --cream-50:     #232a28;
+  --cream-100:    #2a322f;
+  --cream-200:    #34403b;
+
+  --surface:        #232a28;
+  --surface-soft:   #2a322f;
+  --surface-strong: #2c3431;
+
+  --border-soft:    rgba(255,255,255,0.06);
+  --border:         rgba(255,255,255,0.10);
+  --text-muted:     #b8c2bd;  /* bumped from #9aa5a0 (3.95:1) to clear WCAG AA 4.5:1 on --surface in dark mode */
+  --text:           #E6ECE7;
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-2: 0 4px 14px rgba(0,0,0,0.32);
+  --shadow-3: 0 8px 28px rgba(0,0,0,0.4);
+
+  --warn-bg:    #3b2f24;
+  --warn-fg:    #E9C7AB;
+  --error-bg:   #3b2823;
+  --error-fg:   #EFB6A3;
+  --success-bg: #28362d;
+  --success-fg: #B4D8BA;
+
+  --sage-500: #94ad9c;
+}
