@@ -44,14 +44,14 @@ final class Response
             fwrite(STDERR, "HTTP $status $safe\n");
             exit(1);
         }
-        // Simple bare-bones error page that keeps Wellspring styling.
+        // Simple bare-bones error page that keeps SentinelStack styling.
         $debug = filter_var(Env::get('APP_DEBUG', 'false'), FILTER_VALIDATE_BOOLEAN);
         echo <<<HTML
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>$status · Wellspring</title>
+<title>$status · SentinelStack</title>
 <link rel="stylesheet" href="/assets/css/tokens.css">
 <link rel="stylesheet" href="/assets/css/base.css">
 <style>body{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:2rem}.card{max-width:520px;text-align:center;background:var(--surface);padding:2.4rem;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.06)}h1{margin:0 0 .6rem;font-family:var(--font-serif)}p{color:var(--text-muted);line-height:1.6}.btn{display:inline-block;margin-top:1.4rem;background:var(--accent);color:#fff;padding:.7rem 1.2rem;border-radius:10px;text-decoration:none}</style>

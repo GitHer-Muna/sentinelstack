@@ -1,4 +1,4 @@
-/* Wellspring — chrome helpers.
+/* SentinelStack — chrome helpers.
    Foundation primitives used by every page module.
    Exposes window.W with toast, confirm, announce, api, passwordStrength, etc.
 */
@@ -530,8 +530,8 @@
   };
   window.addEventListener('error', (e) => {
     if (!isOurScript(e && e.filename)) return;
-    if (e && e.error) console.error('[wellspring] unhandled error:', e.error);
-    else if (e && e.message) console.error('[wellspring] unhandled error:', e.message);
+    if (e && e.error) console.error('[sentinelstack] unhandled error:', e.error);
+    else if (e && e.message) console.error('[sentinelstack] unhandled error:', e.message);
     W.toast('Something went sideways. Please refresh and try again.', 'error');
   });
   window.addEventListener('unhandledrejection', (e) => {
@@ -545,10 +545,10 @@
     // rejection is a worse UX than the silent failure it would otherwise
     // cause.
     if (!(e && e.reason instanceof Error)) {
-      console.warn('[wellspring] non-Error unhandled rejection (suppressed):', e && e.reason);
+      console.warn('[sentinelstack] non-Error unhandled rejection (suppressed):', e && e.reason);
       return;
     }
-    console.error('[wellspring] unhandled promise rejection:', e.reason);
+    console.error('[sentinelstack] unhandled promise rejection:', e.reason);
     W.toast('A request didn\u2019t finish. Please try again in a moment.', 'error');
   });
 

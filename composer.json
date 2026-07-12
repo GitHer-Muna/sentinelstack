@@ -1,6 +1,6 @@
 {
-    "name": "wellspring/wellspring",
-    "description": "Wellspring — a self-hosted personal wellbeing web app",
+    "name": "sentinelstack/sentinelstack",
+    "description": "SentinelStack — a self-hosted personal wellbeing web app",
     "type": "project",
     "license": "MIT",
     "require": {

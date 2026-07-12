@@ -1,6 +1,6 @@
 <?php
 /**
- * Wellspring — curated movement / stretch routines (configuration data).
+ * SentinelStack — curated movement / stretch routines (configuration data).
  *
  * Lives in /config because the content is curated copy that does not need to
  * change per user (no PSR-4 class autoload needed). Completion per user/day is

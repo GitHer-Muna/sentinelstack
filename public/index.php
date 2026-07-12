@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Wellspring — front controller.
+ * SentinelStack — front controller.
  *
  * When run under PHP's built-in dev server (`php -S host:port -t public public/index.php`),
  * this script acts as the ROUTER for every request that does not already map to a real

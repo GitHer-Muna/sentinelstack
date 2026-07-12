@@ -18,7 +18,7 @@ final class Session
             return;
         }
 
-        $name = Env::get('SESSION_NAME', 'wellspring_session');
+        $name = Env::get('SESSION_NAME', 'sentinelstack_session');
         $secure = filter_var(Env::get('SESSION_SECURE', 'false'), FILTER_VALIDATE_BOOLEAN);
 
         session_name($name);

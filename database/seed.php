@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Wellspring — seed script.
+ * SentinelStack — seed script.
  *
  * Idempotent: safe to run multiple times. 
  * Inserts affirmations and ensures the database is fully primed.
@@ -18,7 +18,7 @@ require $autoload;
 
 App\App::boot($root);
 
-$dbPath = App\Env::get('DB_PATH', './data/wellspring.sqlite');
+$dbPath = App\Env::get('DB_PATH', './data/sentinelstack.sqlite');
 $dir = dirname($dbPath);
 if (!is_dir($dir)) {
     mkdir($dir, 0775, true);

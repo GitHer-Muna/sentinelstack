@@ -30,7 +30,7 @@
     <p class="first-time-card__kicker"><?= View::escape($user['display_name'] ?? 'Hi there') ?>, a small space is yours.</p>
     <h2 class="first-time-card__title">Pick one small thing to start with.</h2>
     <p class="first-time-card__body">
-      Wellspring isn&rsquo;t a checklist. A small, steady practice. A glass of water. A two-minute breath. One intention for the day. Any of those counts.
+      SentinelStack isn&rsquo;t a checklist. A small, steady practice. A glass of water. A two-minute breath. One intention for the day. Any of those counts.
     </p>
     <div class="first-time-card__ctas">
       <a class="btn btn-primary" href="/hydration">Log your first glass &rarr;</a>

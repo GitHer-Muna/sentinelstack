@@ -25,7 +25,7 @@ final class Database
         }
 
         if ($path === null || $path === '') {
-            $path = Env::get('DB_PATH', './data/wellspring.sqlite');
+            $path = Env::get('DB_PATH', './data/sentinelstack.sqlite');
         }
 
         $dir = dirname($path);
@@ -50,7 +50,7 @@ final class Database
     /**
      * Drop the cached singleton. Call this if the underlying database file
      * has been replaced underneath us (the seed script does this when the
-     * user deletes data/wellspring.sqlite).
+     * user deletes data/sentinelstack.sqlite).
      */
     public static function reset(): void
     {

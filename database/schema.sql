@@ -1,4 +1,4 @@
--- Wellspring schema.
+-- SentinelStack schema.
 -- Run against a fresh SQLite database. Foreign keys are enabled per-connection.
 
 PRAGMA foreign_keys = ON;

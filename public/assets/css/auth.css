@@ -1,4 +1,4 @@
-/* Wellspring — auth screens.
+/* SentinelStack — auth screens.
    Folded out of pages.css into its own file because the auth templates
    (templates/auth/login.php, templates/auth/register.php) explicitly
    reference /assets/css/auth.css. Auth pages don't pull in layout.php,

@@ -1,4 +1,4 @@
-# Wellspring front controller
+# SentinelStack front controller
 <IfModule mod_rewrite.c>
     RewriteEngine On
 

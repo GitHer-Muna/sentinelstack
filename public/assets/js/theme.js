@@ -1,11 +1,11 @@
-/* Wellspring — theme toggle (light/dark).
+/* SentinelStack — theme toggle (light/dark).
    Smoothly crossfades layouts thanks to chrome surface transitions defined
    in layout.css. Persists to localStorage AND syncs to the server, with a
    failure-revert path so a stuck request never strands the toggle.
 */
 (function () {
   'use strict';
-  const KEY = 'wellspring_theme';
+  const KEY = 'sentinelstack_theme';
   const readPreferred = () => {
     try {
       const v = localStorage.getItem(KEY);

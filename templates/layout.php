@@ -14,7 +14,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <meta name="csrf" content="<?= View::escape($csrfTok) ?>">
-<title><?= View::escape($pageTitle ?? 'Wellspring') ?> · Wellspring</title>
+<title><?= View::escape($pageTitle ?? 'SentinelStack') ?> · SentinelStack</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,7 +67,7 @@
           <path d="M12 2c-3 4-6 8-6 11a6 6 0 0 0 12 0c0-3-3-7-6-11z"/>
         </svg>
       </span>
-      <span class="brand-name">Wellspring</span>
+      <span class="brand-name">SentinelStack</span>
     </div>
 
     <nav class="primary-nav" aria-label="Sections">
@@ -160,7 +160,7 @@
           <?php if ($iconKey): ?>
             <span class="page-title__icon" aria-hidden="true"><?= navIcon($iconKey) ?></span>
           <?php endif; ?>
-          <?= View::escape($pageTitle ?? 'Wellspring') ?>
+          <?= View::escape($pageTitle ?? 'SentinelStack') ?>
         </h1>
       </div>
       <button id="theme-toggle" class="theme-toggle" aria-pressed="<?= $theme === 'dark' ? 'true' : 'false' ?>" aria-label="Toggle theme">

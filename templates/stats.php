@@ -7,7 +7,7 @@
 ?>
 <section class="stats-page">
   <?php if (empty($hasData)): ?>
-    <article class="card stats-onboarding" role="region" aria-label="Get started with Wellspring">
+    <article class="card stats-onboarding" role="region" aria-label="Get started with SentinelStack">
       <div class="stats-onboarding__copy">
         <p class="stats-onboarding__kicker">Your story starts with the first log.</p>
         <h2 class="stats-onboarding__title">A single sip. A two-minute breath. A checked-in mood.</h2>

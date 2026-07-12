@@ -1,4 +1,4 @@
-# Wellspring
+# SentinelStack
 
 A small self-hosted PHP app for tracking daily habits. Water, mindfulness, mood, sleep, movement, intentions. One account, one SQLite file.
 
@@ -37,8 +37,8 @@ Every knob in `.env`. Defaults are safe for local development.
 | `APP_ENV` | `development` | `development` or `production`. |
 | `APP_DEBUG` | `false` | Show PHP error output. |
 | `APP_BASE_URL` | _(empty)_ | Fallback for redirects when `HTTP_HOST` is empty. |
-| `DB_PATH` | `./data/wellspring.sqlite` | Where the SQLite database lives. |
-| `SESSION_NAME` | `wellspring_session` | The session cookie name. |
+| `DB_PATH` | `./data/sentinelstack.sqlite` | Where the SQLite database lives. |
+| `SESSION_NAME` | `sentinelstack_session` | The session cookie name. |
 | `SESSION_LIFETIME` | `0` | `0` = browser session, otherwise TTL in seconds. |
 | `SESSION_SECURE` | `false` | Must be `true` when serving over HTTPS. |
 | `CSRF_LIFETIME` | `14400` | CSRF token rotation period, in seconds (4 hours). |
@@ -105,7 +105,7 @@ done; echo "php-lint errors: $err"
 Reseed the database cleanly:
 
 ```
-rm -f data/wellspring.sqlite
+rm -f data/sentinelstack.sqlite
 php database/seed.php
 ```
 
