@@ -16,5 +16,8 @@
             "Models\\": "src/Models/",
             "Controllers\\": "src/Controllers/"
         }
+    },
+    "scripts": {
+        "dev:catcher": "php bin/dev-catcher.php"
     }
 }

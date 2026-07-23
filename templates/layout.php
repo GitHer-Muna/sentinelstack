@@ -30,6 +30,7 @@
 <script src="/assets/js/vendor/chart.umd.min.js" defer></script>
 <script defer src="/assets/js/app.js"></script>
 <script defer src="/assets/js/theme.js"></script>
+<script defer src="/assets/js/notifications.js"></script>
 <?php
   // Page-specific JS modules, loaded conditionally by the page slug.
   // Bare module names — the <script> tag below appends `.js`. Don't include
@@ -163,6 +164,13 @@
           <?= View::escape($pageTitle ?? 'SentinelStack') ?>
         </h1>
       </div>
+      <button id="notif-toggle" class="notif-toggle" aria-label="Notifications" aria-expanded="false" aria-controls="notif-drawer">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 8a6 6 0 0 1 12 0c0 4 2 6 2 6H4s2-2 2-6z"/>
+          <path d="M10 18a2 2 0 0 0 4 0"/>
+        </svg>
+        <span class="notif-badge" data-unread-count hidden>0</span>
+      </button>
       <button id="theme-toggle" class="theme-toggle" aria-pressed="<?= $theme === 'dark' ? 'true' : 'false' ?>" aria-label="Toggle theme">
         <span class="theme-toggle-icon" data-icon-sun>
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4"/></svg>
@@ -192,6 +200,20 @@
   <a href="/stats"       <?= ($pageTitle ?? '')==='Stats' ? 'aria-current="page"' : '' ?> aria-label="Stats">         <?= navIcon('chart') ?><span class="sr-only">Stats</span></a>
   <a href="/settings"    <?= ($pageTitle ?? '')==='Settings' ? 'aria-current="page"' : '' ?> aria-label="Settings">  <?= navIcon('gear') ?><span class="sr-only">Settings</span></a>
 </nav>
+
+<aside id="notif-drawer" class="notif-drawer" hidden aria-label="Notifications" aria-labelledby="notif-drawer-title">
+  <header class="notif-drawer__head">
+    <h2 id="notif-drawer-title" class="notif-drawer__title">Reminders</h2>
+    <div class="notif-drawer__actions">
+      <button class="link-btn" type="button" data-action="clear-read">Clear read</button>
+      <button class="link-btn" type="button" data-action="mark-all-read">Mark all read</button>
+      <button class="notif-drawer__close" type="button" data-action="close" aria-label="Close">&times;</button>
+    </div>
+  </header>
+  <div class="notif-drawer__body">
+    <p class="muted small">Nothing here yet.</p>
+  </div>
+</aside>
 
 <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-msg">
   <form method="dialog" class="confirm-dialog__body">

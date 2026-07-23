@@ -11,6 +11,7 @@ use Models\DateUtil;
 use Models\MoodEntry;
 use Models\MovementLog;
 use Models\MindfulnessSession;
+use Models\Notification;
 use Models\SleepLog;
 use Models\Todo;
 use Models\User;
@@ -245,6 +246,56 @@ final class ApiController
             SleepLog::delete($uid, $id);
             return $this->ok(['id' => $id]);
         }
+        return $this->fail('Unknown action.');
+    }
+
+    public function notifications()
+    {
+        $this->bootstrap();
+        $uid = $this->uid();
+        $user = User::find($uid);
+        $tz = $user['timezone'];
+
+        $action = $_POST['action'] ?? 'list';
+
+        if ($action === 'list') {
+            // Thread $tz into recent() so the model doesn't re-query
+            // `SELECT timezone FROM users` for every poll. The `list`
+            // action runs while the drawer is open (and on the 60s
+            // poll), so the saved query is visible in slow-query logs.
+            $rows = Notification::recent($uid, 30, $tz);
+            $items = array_map(function ($n) {
+                return [
+                    'id'              => (int) $n['id'],
+                    'kind'            => (string) $n['kind'],
+                    'body'            => (string) $n['body'],
+                    'fired_at_local'  => (string) $n['fired_at_local'],
+                    // recent() always populates fired_at_display; the cast
+                    // is a belt-and-suspenders holdover from a previous
+                    // shape where the field could be absent.
+                    'fired_at_display'=> (string) $n['fired_at_display'],
+                    'delivered_email' => (int) $n['delivered_email'],
+                    'read_at'         => $n['read_at'] ? (string) $n['read_at'] : null,
+                ];
+            }, $rows);
+            return $this->ok([
+                'notifications' => $items,
+                'unread'        => Notification::unread($uid),
+            ]);
+        }
+
+        if ($action === 'mark-read') {
+            $id = Validator::positiveInt($_POST['id'] ?? null);
+            if (!$id) return $this->fail('id is required');
+            Notification::markRead($uid, $id, $tz);
+            return $this->ok(['unread' => Notification::unread($uid)]);
+        }
+
+        if ($action === 'mark-all-read') {
+            Notification::markAllRead($uid, $tz);
+            return $this->ok(['unread' => 0]);
+        }
+
         return $this->fail('Unknown action.');
     }
 

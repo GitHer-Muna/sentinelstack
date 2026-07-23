@@ -9,6 +9,7 @@ use App\Session;
 use App\Validator;
 use App\View;
 use Models\RateLimit;
+use Models\Reminder;
 use Models\User;
 
 final class AuthController
@@ -123,6 +124,12 @@ final class AuthController
         }
 
         $id = User::create($email, $displayName, $password, $timezone);
+
+        // Create reminder preferences with email opt-in enabled by
+        // default so a brand-new user receives email reminders
+        // immediately without needing to visit /settings first.
+        Reminder::ensureDefaults($id, $timezone);
+
         RateLimit::recordRegisterSuccess($ip);   // audit row: succeeded=1
         RateLimit::clearRegisterFailures($ip);   // prune failed probes for this IP (succeeded=0)
         Session::regenerate();

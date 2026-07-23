@@ -23,7 +23,7 @@
 
       <label class="field">
         <span class="field-label">One thing you're grateful for</span>
-        <input class="field-input" type="text" name="gratitude" maxlength="240" value="<?= View::escape($today['gratitude'] ?? '') ?>" placeholder="e.g. A quiet morning coffee">
+      <textarea class="field-input" name="gratitude" maxlength="240" rows="2" placeholder="e.g. A quiet morning coffee"><?= View::escape($today['gratitude'] ?? '') ?></textarea>
       </label>
 
       <label class="field">

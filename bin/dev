@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# bin/dev — single-command dev server for SentinelStack.
+#
+# Boots BOTH the local SMTP catcher (bin/dev-catcher.php) and the PHP
+# dev server (`php -S 127.0.0.1:8000 -t public public/index.php`) so a
+# fresh checkout has the full dev-test loop wired up with one command.
+#
+#   $ bin/dev
+#   catcher pid=1234 (logs: /tmp/smtp-catcher-stdout.log,
+#                    captured mail: /tmp/smtp-catcher.log)
+#   dev server: http://127.0.0.1:8000  (Ctrl-C stops both)
+#
+# The catcher is what makes the **Test email** button on /settings have
+# somewhere to land during development. Without it, the SMTP transport's
+# connect() fails, Resend 422s on the dev From address (sentinelstack@localhost
+# is the .env default), and PHP mail() has no MTA on a vanilla dev box —
+# all three transports return false and you get a "FAILED" flash.
+#
+# The two processes are siblings under this shell. Ctrl-C traps the
+# catcher so a single Ctrl-C stops both cleanly. The catcher's own
+# accept loop is fault-tolerant to a hard SIGTERM — port 1025 is
+# released and any half-read connection gets EOF.
+
+set -euo pipefail
+
+# Resolve repo root from this script's location so bin/dev works no
+# matter where on the filesystem it's invoked from.
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+# Free port 1025 if a previous run left it bound. Idempotent — if
+# nothing's listening, fuser returns non-zero and we move on.
+# We intentionally leave `fuser`'s stderr on the operator's terminal:
+# `fuser -k` prints the PID it just SIGKILL'd to stderr, which is
+# the signal that tells us if a previous catcher (or some other dev
+# process that happened to be on 1025) got reaped. Hiding it would
+# mask that, and a surprise SIGKILL against an unrelated service
+# would be invisible to the operator.
+fuser -k 1025/tcp || true
+
+# Start the catcher as a backgrounded child of this shell. nohup
+# detaches it from the controlling terminal so it survives this script
+# returning to the caller if it gets backgrounded itself; stdout/stderr
+# go to a stable log path so the operator can diagnose later.
+nohup php bin/dev-catcher.php >/tmp/smtp-catcher-stdout.log 2>&1 &
+CATCH_PID=$!
+echo "catcher pid=$CATCH_PID"
+echo "  stdout:        /tmp/smtp-catcher-stdout.log"
+echo "  captured mail: /tmp/smtp-catcher.log"
+
+# Wait briefly for the bind. 0.3s × 10 retries ≈ 3s, generous for slow
+# first-run setups while still feeling instant on warm starts.
+ATTEMPTS=10
+for _ in $(seq 1 "$ATTEMPTS"); do
+    if ss -tlnp 2>/dev/null | grep -q ':1025 '; then
+        echo "catcher bound on 127.0.0.1:1025"
+        break
+    fi
+    sleep 0.3
+done
+if ! ss -tlnp 2>/dev/null | grep -q ':1025 '; then
+    echo "catcher failed to bind — check /tmp/smtp-catcher-stdout.log" >&2
+    kill "$CATCH_PID" 2>/dev/null || true
+    exit 1
+fi
+
+# Ctrl-C / SIGTERM handler: stop the catcher so port 1025 is released
+# and the next `bin/dev` doesn't have to deal with a TIME_WAIT block.
+cleanup() {
+    echo
+    echo "stopping catcher (pid=$CATCH_PID)..."
+    kill "$CATCH_PID" 2>/dev/null || true
+    # Give it a beat to release the socket, then force if it's stuck.
+    sleep 0.3
+    if kill -0 "$CATCH_PID" 2>/dev/null; then
+        kill -9 "$CATCH_PID" 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT INT TERM
+
+echo
+echo "dev server: http://127.0.0.1:8000"
+echo "  Ctrl-C stops both processes."
+echo
+
+# Note: deliberately NO `exec` here. `exec php -S …` would replace
+# this shell's process image with PHP — which feels tidy but wipes
+# out the EXIT/INT/TERM trap registration. The trap would become
+# dead code: Ctrl-C would still kill PHP -S (you'd see it exit), but
+# the catcher would survive orphaned and port 1025 would stay bound
+# until the next `bin/dev` ran `fuser -k`. Without `exec`, this
+# shell stays the foreground process group leader, SIGINT is
+# delivered to it AND propagated to the foreground child (PHP -S)
+# via the process-group terminal signal, the cleanup trap fires
+# cleanly, and both processes exit on a single Ctrl-C.
+php -S 127.0.0.1:8000 -t public public/index.php

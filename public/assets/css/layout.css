@@ -171,7 +171,12 @@ body,
     flex-direction: row;
     align-items: center;
     gap: var(--s-3);
-    padding: var(--s-3) var(--s-4);
+/* env(safe-area-inset-top) covers the iPhone notch / Dynamic Island in PWA
+      standalone mode. max() keeps the bar from shrinking below its
+      design padding on devices that don't report a safe-area inset. */
+    padding: max(var(--s-3), env(safe-area-inset-top)) var(--s-4);
+    padding-left:  max(var(--s-4), env(safe-area-inset-left));
+    padding-right: max(var(--s-4), env(safe-area-inset-right));
     border-right: 0;
     border-bottom: 1px solid var(--border-soft);
     background: linear-gradient(180deg, var(--cream-50) 0%, var(--cream) 100%);
@@ -220,7 +225,8 @@ body,
     padding: 0.7rem 0.4rem;
     border-radius: var(--r-sm);
     color: var(--text-muted);
-    font-size: 0.66rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.005em;
     line-height: 1.2;
     text-decoration: none;
   }

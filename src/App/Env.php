@@ -6,7 +6,11 @@ namespace App;
 /**
  * Tiny .env loader.
  *
- * Reads KEY=VALUE pairs into getenv() and $_ENV. Does not overwrite existing env.
+ * Reads KEY=VALUE pairs into getenv() and $_ENV. Always overwrites with
+ * the .env file's values so the file is the authoritative source of
+ * configuration — a stale env var hanging around in the shell can't
+ * silently override a .env change.
+ *
  * Should be called very early — App::boot invokes this.
  */
 final class Env
@@ -35,10 +39,8 @@ final class Env
                  ($value[0] === "'" && substr($value, -1) === "'"))) {
                 $value = substr($value, 1, -1);
             }
-            if (getenv($key) === false) {
-                putenv("$key=$value");
-                $_ENV[$key] = $value;
-            }
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
         }
     }
 

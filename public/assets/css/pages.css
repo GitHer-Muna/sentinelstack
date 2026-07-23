@@ -605,3 +605,111 @@
 [data-theme="dark"] .routine-time[data-time="morning"] { background: #3a2820; color: #f5d2b4; border: 1px solid #5a3a2a; }[data-theme="dark"] .routine-time[data-time="midday"]  { background: #1f2a32; color: #e8f4fa; border: 1px solid #2c4258; }[data-theme="dark"] .routine-time[data-time="evening"] { background: #2a2a2a; color: #f8fafa; border: 1px solid #404040; }[data-theme="dark"] .routine-time[data-time="anytime"] { background: #1f2a25; color: #e8faee; border: 1px solid #2a4035; }
 
 
+
+/* ─── /settings — Reminders card ──────────────────────────────── */
+.reminder-cron-note {
+  margin: 0 0 var(--s-3);
+  max-width: 60ch;
+  line-height: 1.55;
+}
+
+/* Master pause bar — sits at the top of the Reminders card. */
+.pause-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--cream-50);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  margin-bottom: var(--s-4);
+}
+.pause-bar__status {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+.pause-bar__badge {
+  display: inline-block;
+  padding: 0.18rem 0.65rem;
+  background: var(--terracotta);
+  color: var(--charcoal);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.pause-bar__label { flex-shrink: 0; }
+.pause-bar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  align-items: center;
+}
+.pause-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--border);
+  background: var(--cream-50);
+  color: var(--text-muted);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+.pause-chip:hover { background: var(--cream-100); border-color: var(--sage-300); color: var(--text); }
+.pause-chip:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(124,152,133,0.30); }
+
+/* Per-kind reminder row — one card-ish row per kind, grouped under
+   the master pause bar. Simpler than a 2-col card grid. */
+.reminders-form { display: flex; flex-direction: column; gap: var(--s-3); }
+.reminder-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.reminder-row__main {
+  display: flex; align-items: flex-start; gap: var(--s-3);
+  cursor: pointer;
+}
+.reminder-row__main input[type="checkbox"] {
+  margin-top: 0.25rem; flex-shrink: 0;
+}
+.reminder-row__main strong { display: block; font-weight: 500; }
+.reminder-row__main .d-block { display: block; }
+.reminder-row__controls {
+  display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center;
+  padding-left: 1.5rem;
+}
+.field-inline {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+}
+.field-inline .field-label { margin: 0; white-space: nowrap; }
+.field-inline .field-input { width: auto; }
+.field-inline input[type="number"] { max-width: 5rem; }
+.reminder-row__email {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  color: var(--text-muted); font-size: 0.88rem;
+  cursor: pointer;
+}
+.reminder-row__email.is-disabled { opacity: 0.45; cursor: not-allowed; }
+.reminder-row__email input[disabled] { cursor: not-allowed; }
+
+/* Test channel row at the bottom of the Reminders card. */
+.reminder-test-row {
+  display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center;
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--border-soft);
+}
+.inline-form { display: inline-block; margin: 0; }
+.btn.btn-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; }

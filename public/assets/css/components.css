@@ -40,7 +40,7 @@
   color: var(--charcoal);
   filter: brightness(0.94);
 }
-.btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(138,77,49,0.35); } /* matches the new --terracotta-700 #8a4d31 */
+.btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--terracotta-700) 35%, transparent); } /* matches the new --terracotta-700 #8a4d31 */
 
 .btn-secondary {
   /* sage-600 + white = 4.84:1 (AA). sage-500 + white was 3.11:1 (fail). */
@@ -295,3 +295,20 @@ textarea { resize: vertical; min-height: 4rem; }
   background: transparent;
 }
 .date-quick__btn--clear:hover { background: var(--cream-100); color: var(--terracotta-700); border-color: var(--terracotta-300); }
+
+/* Required-field indicator: a small terracotta asterisk after the label.
+   Uses :has() so it tracks any required input / select / textarea inside .field
+   regardless of DOM order. Purely visual -- aria-required stays on the input
+   for screen readers. */
+.field:has(input[required], select[required], textarea[required]) .field-label::after {
+  content: " *";
+  color: var(--terracotta-700);
+  font-weight: 600;
+  margin-left: 0.18rem;
+}
+
+/* "Working..." button isn't a disabled button. Use a real progress cursor so
+   the user sees the click took effect rather than a frozen arrow /
+   not-allowed glyph (which JS-set disabled buttons default to). */
+.btn[aria-busy="true"],
+.btn[data-busy="1"] { cursor: progress; }

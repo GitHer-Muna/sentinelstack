@@ -15,6 +15,11 @@ CREATE TABLE IF NOT EXISTS users (
     theme           TEXT NOT NULL DEFAULT 'light' CHECK(theme IN ('light','dark')),
     water_goal      INTEGER NOT NULL DEFAULT 2000,
     water_unit      TEXT NOT NULL DEFAULT 'ml' CHECK(water_unit IN ('ml','oz')),
+    -- Master pause timestamp (ISO 8601, UTC). When set to a future value,
+    -- ReminderDispatcher skips every fire for this user until the
+    -- timestamp is in the past. The settings page exposes a "pause all"
+    -- chip group that writes a future timestamp here.
+    notifications_paused_until TEXT,
     created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
@@ -196,3 +201,50 @@ CREATE TABLE IF NOT EXISTS affirmations (
     body        TEXT NOT NULL UNIQUE,
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
+
+-- ============================================================
+-- reminder_prefs
+-- One row per (user, kind). The five kinds are hardcoded in code
+-- (Reminder::KINDS): drinking (interval), mindful/intentions/mood/sleep
+-- (time-of-day). Defaults are lazily inserted by Reminder::ensureDefaults()
+-- on the user's first visit to /settings, so a brand-new user picks up
+-- sensible defaults without admin work.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS reminder_prefs (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id           INTEGER NOT NULL,
+    kind              TEXT NOT NULL CHECK(kind IN ('drinking','mindful','intentions','mood','sleep')),
+    enabled           INTEGER NOT NULL DEFAULT 1,
+    scheduled_time    TEXT,                          -- HH:MM in user's local time, NULL for interval kinds
+    threshold_minutes INTEGER,                       -- interval in minutes, NULL for time-of-day kinds
+    notify_email      INTEGER NOT NULL DEFAULT 0,    -- per-kind opt-in for the email side-channel
+    created_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    updated_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    UNIQUE(user_id, kind),
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_reminder_prefs_user ON reminder_prefs(user_id);
+
+-- ============================================================
+-- notifications
+-- The in-app inbox. One row per fired reminder. The dispatcher
+-- de-dupes new fires against this table so cron-at-09:00 +
+-- cron-at-09:01 only writes one row per (user, kind, local_date).
+-- End users mark rows read by stamping read_at.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS notifications (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         INTEGER NOT NULL,
+    kind            TEXT NOT NULL CHECK(kind IN ('drinking','mindful','intentions','mood','sleep')),
+    body            TEXT NOT NULL,
+    fired_at_local  TEXT NOT NULL,                  -- user's local clock, no TZ suffix
+    delivered_email INTEGER NOT NULL DEFAULT 0,      -- 0 = not attempted, 1 = email send succeeded
+    read_at         TEXT,                           -- user's local clock when user dismissed it
+    created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_fired ON notifications(user_id, fired_at_local);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_kind_day ON notifications(user_id, kind, substr(fired_at_local, 1, 10));

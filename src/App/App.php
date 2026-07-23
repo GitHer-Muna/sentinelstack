@@ -45,6 +45,11 @@ final class App
 
         Session::start();
         Csrf::rotateIfStale();
+
+        // Idempotent on-the-fly schema migration. Safe to call on every
+        // request — the PRAGMA check is cheap and the ALTER is a no-op
+        // once the column exists.
+        \Models\User::ensureSchema();
     }
 
     public function handle(): void
@@ -93,6 +98,16 @@ final class App
         $r->post('/settings/password',   [SettingsController::class, 'changePassword']);
         $r->post('/settings/delete',     [SettingsController::class, 'deleteAccount']);
 
+        // Reminders (settings UI): per-kind schedule save.
+        $r->post('/settings/reminders',  [SettingsController::class, 'updateReminders']);
+        // Master "pause all" toggle.
+        $r->post('/settings/pause',      [SettingsController::class, 'setPause']);
+        // Immediate-feedback: fire a test notification + send a test email
+        // so the user can confirm the channel works without waiting for
+        // the cron to fire at the scheduled minute.
+        $r->post('/settings/test-notification', [SettingsController::class, 'testNotification']);
+        $r->post('/settings/test-email',        [SettingsController::class, 'testEmail']);
+
         // AJAX / API endpoints. All require auth.
         $r->post('/api/hydration',       [ApiController::class, 'hydration']);
         $r->post('/api/todos',           [ApiController::class, 'todos']);
@@ -101,5 +116,6 @@ final class App
         $r->post('/api/mood',            [ApiController::class, 'mood']);
         $r->post('/api/movement',        [ApiController::class, 'movement']);
         $r->post('/api/sleep',           [ApiController::class, 'sleep']);
+        $r->post('/api/notifications',   [ApiController::class, 'notifications']);
     }
 }
