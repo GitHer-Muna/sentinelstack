@@ -15,3 +15,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+.env
+data/*.sqlite
+vendor/
