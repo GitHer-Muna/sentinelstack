@@ -18,6 +18,3 @@ Thumbs.db
 .env
 data/*.sqlite
 vendor/
-.env
-data/*.sqlite
-vendor/
