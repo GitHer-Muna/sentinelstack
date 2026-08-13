@@ -1,0 +1,24 @@
+[Unit]
+Description=SentinelStack Webapp Container 1
+After=docker.service
+Requires=docker.service
+
+[Service]
+# DOCKER_HOST must be set explicitly here — systemd --user services don't
+# inherit ~/.bashrc, so without this the docker CLI tries the default
+# rootful socket and fails instantly.
+Environment=DOCKER_HOST=unix:///run/user/10500/docker.sock
+ExecStartPre=-/usr/bin/docker rm -f webapp1
+ExecStart=/usr/bin/docker run --rm --name webapp1 \
+  --user appuser \
+  --cap-drop=ALL \
+  --security-opt no-new-privileges \
+  -p 8081:8080 \
+  -v /data/webapps/appdata:/var/www/html/data \
+  sentinelstack:hardened
+ExecStop=/usr/bin/docker stop webapp1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

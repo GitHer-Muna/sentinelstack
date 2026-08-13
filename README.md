@@ -1,182 +1,154 @@
 # SentinelStack
 
-A small self-hosted PHP app for tracking daily habits. Water, mindfulness, mood, sleep, movement, intentions. One account, one SQLite file.
+SentinelStack (working name Wellspring) is a small habit-tracking app I built in PHP — water,
+mood, sleep, movement, mindfulness, daily intentions, one account, one SQLite file. This
+README covers both the app and how I deployed it: EC2, rootless Docker, SELinux enforcing,
+systemd-managed failover, and a Prometheus/Grafana monitoring stack, all under a single
+non-root service account.
 
-## Features
+## Why deploy it this way
 
-- **Hydration** — log glasses (ml or oz), see 7-day and 30-day bar charts.
-- **Intentions** — one-off tasks for today + recurring habits with daily or weekly cadence. Drag the list to reorder.
-- **Mindfulness** — guided timer with three breath patterns (box, 4-7-8, equal).
-- **Mood & gratitude** — one entry per day with optional note and one-line gratitude.
-- **Movement** — eight curated routines, mark done for the day. Feeds the streak.
-- **Sleep** — log hours and minutes; nightly entry.
-- **Stats** — last 14 days of trends + a plain-English weekly review paragraph.
-- **Notifications** — in-app bell + drawer with per-kind reminders (drinking, mindful, intentions, mood, sleep), opt-in email side-channel via SMTP, master "pause all" chips, and "Test bell / Test email" buttons so you can confirm the channels work without waiting for the cron.
-- **Settings** — display name, timezone, theme, water unit + goal, password, reminder schedule, account deletion.
+I could run this with `php -S` on my laptop and be done in five minutes. The deployment side
+of this project was a deliberate exercise, separate from the app itself: take something
+small and actually working, and put it through a production-style setup — rootless
+containers, mandatory access control, failover, real monitoring — the kind of infrastructure
+work that shows up in job requirements far more than it shows up in tutorials.
 
-## Quick start
+## What's running, and how each requirement was met
 
-Requires PHP 8.0+ with `pdo_sqlite`, `mbstring`, `json`; Composer; SQLite.
+| Requirement | What I did |
+|---|---|
+| EC2 instance, OS disk + data disk | Rocky Linux 9, 20GB root volume, separate 20GB volume mounted at `/data` |
+| Rootless Docker | Docker daemon runs under a dedicated non-root user — no root-owned daemon anywhere on the host |
+| User namespaces enabled | Confirmed via `/proc/sys/user/max_user_namespaces`, subordinate UID/GID ranges set in `/etc/subuid` and `/etc/subgid` |
+| Docker starts on boot | `systemd --user` service + `loginctl enable-linger`; I stopped and restarted the whole instance to actually confirm this, not just assumed it |
+| SELinux enforcing | Rocky Linux ships this on by default — checked with `sestatus` after launch |
+| Immutable AMI | Created after full configuration, via EC2 → Create image |
+| Service user, UID 10000–12000 | `webapps`, UID 10500 |
+| Web app on `php:8.5-apache` | Custom image, see `deploy/Dockerfile` |
+| Container can't run as root | Two layers: `USER appuser` in the Dockerfile, plus a runtime check in the entrypoint that exits if UID is 0. Tested with `docker run --user 0` — it refuses, as required |
+| No privileges, all dropped | `--cap-drop=ALL` on every app container |
+| No privilege escalation | `--security-opt no-new-privileges` |
+| systemd wrapper, boot-enabled | `deploy/systemd/webapp1.service`, `webapp2.service` |
+| Container data on the data disk | Bind-mounted from `/data/webapps/...` |
+| Multiple containers, failover | Two identical containers on separate ports, each its own systemd unit with `Restart=always` |
+| Grafana, rootless, same user | Runs under `webapps`, same as everything else |
+| Prometheus, rootless, host + container metrics | `deploy/prometheus/prometheus.yml` — scrapes node-exporter and cAdvisor |
+| Shutdown schedule | EventBridge Scheduler, nightly, IAM role scoped to `ec2:StopInstances` only |
+
+## The parts that didn't work first try
+
+I'm including this because I think it's more useful than pretending everything went smoothly.
+
+Rootless Docker isn't what the name suggests at first glance. It doesn't mean the container
+avoids root — it means the Docker daemon itself runs as an ordinary user instead of root, so
+there's no root-owned background process to attack in the first place. Making the container
+also refuse to run as root was a separate requirement on top of that. Rather than committing
+a separate `entrypoint.sh` file, the check is generated directly inside the Dockerfile with a
+single `RUN` instruction that writes the script into the image at build time — it checks its
+own UID as soon as the container starts, and exits immediately if that UID is 0.
+
+The trickiest bug wasn't in the app, it was in my own shell command. Early on I ran two `sed`
+substitutions back to back to change Apache's listen port, and the second one ran again on
+the line the first had already fixed, mangling it into an invalid port number. Apache's error
+pointed at the config file, not at the cause, which was the command that generated it. Fixed
+by anchoring the substitution so it could only match the exact original line, once.
+
+Prometheus and Grafana both kept crashing with permission errors on their data folders, even
+after I'd set ownership to match the UID each container reported running as. Turned out that
+UID gets remapped by the kernel under rootless Docker's user namespaces — the number a
+container sees isn't the number that actually owns files on the host. Once I understood that,
+the fix was straightforward.
+
+And `host.docker.internal`, which is the usual way to let a container reach something running
+on the host, doesn't reliably reach *other containers'* ports under rootless Docker — it goes
+through a different network path than it does in a normal root-owned Docker setup. The fix
+was putting Prometheus, node-exporter, and cAdvisor on a shared Docker network and having them
+talk to each other by container name instead of going through the host at all.
+
+## Monitoring, and why there's only one config file for it
+
+Grafana is configured entirely through its own web UI — add a data source, import a
+dashboard. There's no file for it in this repo; its settings live in Grafana's own internal
+database, which is why its data directory is on the persistent data disk.
+
+Prometheus is the one place with a hand-written config, `deploy/prometheus/prometheus.yml`.
+It needs one because it's pull-based and doesn't know anything about your infrastructure by
+default — you tell it explicitly what addresses to poll and how often. Something like AWS
+CloudWatch doesn't need that because it's push-based and built into AWS itself — EC2 sends it
+metrics automatically since they're the same company's products. Prometheus works the same
+way regardless of what it's monitoring or where, which is the whole reason it's used outside
+AWS-only environments in the first place.
+
+## Repository layout
+
+```
+sentinelstack/
+├── deploy/
+│   ├── Dockerfile              the actual image build for the PHP app
+│   ├── systemd/
+│   │   ├── webapp1.service
+│   │   └── webapp2.service
+│   └── prometheus/
+│       └── prometheus.yml
+├── public/                     web root
+├── src/                        App / Models / Controllers
+├── templates/                  view layer
+├── config/routines.php
+├── database/                   schema.sql, seed.php
+├── bin/                        cron.php and local dev helpers
+├── composer.json / composer.lock
+└── .env.example
+```
+
+## Reproducing the deployment
+
+```
+docker build -t sentinelstack:hardened -f deploy/Dockerfile .
+```
+
+Copy `deploy/systemd/*.service` into `~/.config/systemd/user/` on the target host:
+
+```
+systemctl --user daemon-reload
+systemctl --user enable --now webapp1.service webapp2.service
+```
+
+For the monitoring side: run node-exporter and cAdvisor as plain containers, put them on a
+shared Docker network with Prometheus, then point `deploy/prometheus/prometheus.yml` at them
+by container name. Add Grafana on the same network and point its data source at
+`http://prometheus:9090` through the Grafana UI.
+
+## Application
+
+### Features
+
+Hydration logging with 7-day and 30-day charts. Daily intentions and recurring habits.
+A guided mindfulness timer with three breath patterns. Mood and gratitude, one entry a day.
+Eight movement routines. Sleep logging. A stats page with a plain-English weekly review.
+Settings for theme, water goal, password, and account deletion.
+
+### Running it locally, without Docker
+
+Requires PHP 8.0+ with `pdo_sqlite`, `mbstring`, `json`, plus Composer.
 
 ```
 composer install
 cp .env.example .env
 php database/seed.php
-bin/dev
+php -S 127.0.0.1:8000 -t public public/index.php
 ```
 
-`bin/dev` boots the PHP dev server **and** the local SMTP catcher on `127.0.0.1:1025` in one shell so the **Test email** button on `/settings` has somewhere to land during development. Ctrl-C stops both. Captured mail is appended to `/tmp/smtp-catcher.log`. If you'd rather wire the two up yourself (e.g. under tmux), `php -S 127.0.0.1:8000 -t public public/index.php` and `php bin/dev-catcher.php` are the two commands it runs; either can be skipped. Without the catcher, the SMTP transport's `connect()` fails, Resend 422s on the dev From address, and PHP `mail()` has no MTA on a vanilla dev box — all three transports return false and the button shows a FAILED flash; the in-app bell drawer still works either way.
-```
+Open `http://127.0.0.1:8000` — first page is `/login`.
 
-Open http://127.0.0.1:8000. First page is `/login`. Make an account, pick a timezone, you're in.
+### Security
 
-> Visit `http://127.0.0.1:8000`, not `http://localhost:8000`. The session cookie is bound to the host the browser actually requested; switching between the two mid-session desyncs "logged in" from "greeting visible" until you log out and back in.
+Passwords hashed with Argon2id. CSRF token required on every request that changes data,
+rotating on a timer. Sessions are `HttpOnly` and `SameSite=Lax`, with the session ID
+regenerated on login so a cookie stolen before sign-in is useless afterward. Login is
+rate-limited per email, registration rate-limited per IP. All database queries go through
+PDO prepared statements.
 
-## Configuration
-
-Every knob in `.env`. Defaults are safe for local development.
-
-| Variable | Default | What it does |
-| --- | --- | --- |
-| `APP_ENV` | `development` | `development` or `production`. |
-| `APP_DEBUG` | `false` | Show PHP error output. |
-| `APP_BASE_URL` | _(empty)_ | Fallback for redirects when `HTTP_HOST` is empty. |
-| `DB_PATH` | `./data/sentinelstack.sqlite` | Where the SQLite database lives. |
-| `SESSION_NAME` | `sentinelstack_session` | The session cookie name. |
-| `SESSION_LIFETIME` | `0` | `0` = browser session, otherwise TTL in seconds. |
-| `SESSION_SECURE` | `false` | Must be `true` when serving over HTTPS. |
-| `CSRF_LIFETIME` | `14400` | CSRF token rotation period, in seconds (4 hours). |
-| `LOGIN_MAX_ATTEMPTS` | `5` | Failed-login threshold per email before lockout. |
-| `LOGIN_WINDOW_SECONDS` | `900` | Window the failed-login counter slides over. |
-| `SEND_NOTIFICATIONS_EMAIL` | `false` | Server-wide opt-in for the email side-channel. Off by default so a self-hosted install without a working relay is silent instead of flooding the postfix queue. |
-| `NOTIFICATION_FROM_EMAIL` | `sentinelstack@localhost` | The `From:` / envelope-sender address. Set to a real address on a domain you control — many SMTP relays reject `sentinelstack@localhost` for SPF/DKIM reasons. Resend will reject it until you've verified the domain. |
-| `RESEND_API_KEY` | _(empty)_ | **Preferred** transport. If set (looks like `re_xxxx`), reminders go out via Resend's HTTP API; the SMTP vars below are ignored. No port-25 / STARTTLS / IP-reputation hassles and no MTA to babysit. |
-| `NOTIFICATION_SMTP_HOST` | _(empty)_ | Raw SMTP transport — used only if `RESEND_API_KEY` is unset. If both this and `RESEND_API_KEY` are empty, falls back to PHP's `mail()`. |
-| `NOTIFICATION_SMTP_PORT` | `587` | SMTP port. |
-| `NOTIFICATION_SMTP_USER` / `NOTIFICATION_SMTP_PASS` | _(empty)_ | SMTP credentials. Leave blank for relays that don't require auth. |
-| `NOTIFICATION_SMTP_ENCRYPTION` | `starttls` | `starttls` (port 587), `tls` (implicit TLS, port 465), or `none` (local dev only). |
-
-`SESSION_SECURE=false` is required for plain HTTP. Set it to `true` behind NGINX or the ALB.
-
-## Usage
-
-Navigation is the sidebar on the left (or the bottom nav on mobile).
-
-| Path | What it does |
-| --- | --- |
-| `/dashboard` | The Today page — affirmation, water ring, intentions count, streak tiles. |
-| `/hydration` | Quick-add buttons, manual log, undo last entry, 7-day + 30-day charts. |
-| `/todos` | Daily tasks and recurring habits. Drag to reorder. |
-| `/mindfulness` | Pick a duration and a breath pattern, hit Begin. |
-| `/mood` | Pick a mood emoji, write one gratitude line. One entry per day. |
-| `/sleep` | Hours and minutes, save. |
-| `/movement` | Eight routines. Mark done for the day. |
-| `/stats` | Last 14 days of trends, weekly review. |
-| `/settings` | Profile, theme, water goal, password, reminders, account deletion. |
-
-The bell in the page header holds the day's notification inbox. The page polls every 60 seconds so new reminders show up without a hard reload.
-
-## Notifications
-
-In-app bell + drawer in the page header. Default cadence per kind:
-
-| Kind | Default | Type |
-| --- | --- | --- |
-| Drinking | every 120 minutes | interval-based |
-| Mindful | 09:00 | time-of-day |
-| Intentions | 09:00 | time-of-day |
-| Mood | 21:00 | time-of-day |
-| Sleep | 22:30 | time-of-day |
-
-Tweak any of these on `/settings` under the Reminders card. The master **pause all** chips at the top of that card silence every reminder for 1h, 3h, until evening, until bedtime, or until tomorrow morning. **Test bell** / **Test email** buttons at the bottom of the card fire an immediate in-app notification (and a real email, if email is enabled) so you can confirm the channel works without waiting for the cron.
-
-To actually fire the reminders, run cron once a minute:
-
-```cron
-* * * * * /usr/bin/php /path/to/sentinelstack/database/notify.php >> /var/log/sentinelstack-notify.log 2>&1
-```
-
-The dispatcher is idempotent — a time-of-day reminder won't double-fire on the same local day, and the drinking interval won't re-fire inside its 120-minute window. All times are evaluated in each user's own timezone. A user who has paused all reminders is skipped entirely.
-
-A time-of-day reminder has a **5-minute catch-up window** — if a cron tick lands within 5 minutes after the scheduled minute and today's reminder hasn't fired yet, it goes out (the dedup above stops any double-fire past that). Beyond 5 minutes, today's reminder is skipped; tomorrow's scheduled time will fire normally. This smooths over brief cron jitter or a server reboot without flooding the inbox if cron is offline for an extended period.
-
-Set `SEND_NOTIFICATIONS_EMAIL=true` in `.env` if you want reminders as email too. The per-kind **Email me too** checkbox is a second opt-in; both must be true for an email to go out. Off by default so an instance without a working MTA isn't broken — the in-app drawer still works either way.
-
-**Email provider options** (picked in this order, the first one with a value wins):
-
-1. **Resend** — set `RESEND_API_KEY=re_xxxxxxxxxx`. Most reliable for self-hosted installs: no port-25 blocks, no STARTTLS negotiation, no IP-reputation game. Sign up at [resend.com](https://resend.com), grab a key, verify a domain in their dashboard, and set `NOTIFICATION_FROM_EMAIL` to an address on that domain. While your account is in onboarding mode, you can fall back to the `onboarding@resend.dev` sender that Resend provides for testing.
-2. **Raw SMTP** — set `NOTIFICATION_SMTP_HOST=…`. Use the user/pass/encryption vars as usual. Tested relay shapes: Gmail (`smtp.gmail.com:587` STARTTLS), Mailgun, Postmark, SES, or any local catch-all on `127.0.0.1:1025` for dev.
-3. **PHP `mail()`** — what happens if neither above is set. Requires a working local MTA, almost never the right answer on a shared host but works out of the box on a vanilla Linux box with postfix configured.
-
-Whatever you use, the **Test email** button at the bottom of the Reminders card on `/settings` sends a real test message to your account's address and logs the outcome to the PHP error log (`[sentinelstack Smtp]` / `[sentinelstack Resend]`). Open `/var/log/php*-fpm.log` (or wherever your host logs PHP errors) to confirm the transport picked up.
-
-Dry-run mode for testing the cron job without writing to the database:
-
-```bash
-php database/notify.php --dry-run
-```
-
-## Architecture
-
-```
-sentinelstack/
-├── composer.json       PHP + extension deps only, no runtime libraries
-├── .env.example        every env knob the app reads
-├── public/             web root — what NGINX/Apache/Caddy serves
-│   ├── index.php       front controller + static-asset guard for `php -S`
-│   ├── .htaccess       mod_rewrite + sensitive-file deny list
-│   └── assets/         css/ + js/, no build step
-├── src/
-│   ├── App/            framework primitives: Env, Database, Router, App,
-│   │                   Session, Csrf, Response, View, Validator
-│   ├── Models/         one class per table: User, WaterLog, Todo,
-│   │                   MindfulnessSession, MoodEntry, MovementLog,
-│   │                   SleepLog, Affirmation, RateLimit, DateUtil
-│   └── Controllers/    one class per route group: Auth, Dashboard,
-│                       Hydration, Todo, Mindfulness, Mood, Movement,
-│                       Sleep, Stats, Settings, Api (AJAX), Health
-├── config/             routines.php — curated movement-routine copy
-├── templates/          plain-PHP templates wrapped in a layout shell
-├── database/
-│   ├── schema.sql      CREATE TABLE IF NOT EXISTS for everything
-│   ├── seed.php        idempotent — schema + 62 affirmations
-│   └── notify.php      CLI dispatcher for cron (idempotent, --dry-run mode)
-└── data/               SQLite file lives here (gitignored, regenerated by seed)
-```
-
-The router in `src/App/Router.php` does method + path matching with `{param}` capture. Controllers are `[Class::class, method]` pairs declared in `src/App/App.php`. Models are static-class wrappers around prepared statements — no ORM, no migration tooling.
-
-## Development
-
-Lint every PHP file:
-
-```
-err=0; for f in $(find src templates public database config -type f -name '*.php'); do
-  php -l "$f" 2>&1 | grep -q 'No syntax errors' || { err=$((err+1)); echo "FAIL $f"; }
-done; echo "php-lint errors: $err"
-```
-
-Reseed the database cleanly:
-
-```
-rm -f data/sentinelstack.sqlite
-php database/seed.php
-```
-
-The same lint runs on every push and pull request via `.github/workflows/ci.yml`, so a syntax error in any PHP file fails the build before it can land.
-
-There's no test framework — `php -l` is the safety net. Every controller has an in-process HTTP path that you can hit from the browser to verify its behavior manually.
-
-## Security
-
-- Passwords hashed with Argon2id via PHP's `password_hash()` (no length cap, future-proof).
-- Every mutating endpoint requires a valid CSRF token. The token lives in the session and rotates every `CSRF_LIFETIME` seconds.
-- Sessions use `HttpOnly` and `SameSite=Lax` cookies. `SESSION_SECURE` flips on automatically behind HTTPS.
-- `session_regenerate_id(true)` runs on login and registration so a stolen session cookie from before sign-in is useless.
-- Login is rate-limited per email (default 5 failures in a 15-minute window). Register is rate-limited per IP so a stranger can't probe for registered emails by abusing the duplicate-email response.
-- All SQL goes through PDO prepared statements with `EMULATE_PREPARES = false`. Foreign keys are on. Cascade deletes are configured.
-- `public/.htaccess` denies direct access to `.env`, `.sqlite`, `.sql`, and `.md`.
-
-## License
+### License
 
 MIT.
