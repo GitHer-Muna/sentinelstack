@@ -18,23 +18,23 @@ work that shows up in job requirements far more than it shows up in tutorials.
 
 | Requirement | What I did |
 |---|---|
-| EC2 instance, OS disk + data disk | Rocky Linux 9, 20GB root volume, separate 20GB volume mounted at `/data` |
+| EC2 instance, OS disk + data disk | Rocky Linux 9, 20GB root volume, separate 20GB volume mounted at `/data`. ![Two EBS volumes](screenshots/two-ebs-volumes.png) ![Two disks](screenshots/TwoDisk.png) |
 | Rootless Docker | Docker daemon runs under a dedicated non-root user; no root-owned daemon anywhere on the host |
 | User namespaces enabled | Confirmed via `/proc/sys/user/max_user_namespaces`, subordinate UID/GID ranges set in `/etc/subuid` and `/etc/subgid` |
 | Docker starts on boot | `systemd --user` service + `loginctl enable-linger`; I stopped and restarted the whole instance to actually confirm this, not just assumed it |
-| SELinux enforcing | Rocky Linux ships this on by default ; checked with `sestatus` after launch |
-| Immutable AMI | Created after full configuration, via EC2 → Create image |
+| SELinux enforcing | Rocky Linux ships this on by default ; checked with `sestatus` after launch. ![SELinux enforcing](screenshots/selinux-enforcing.png) |
+| Immutable AMI | Created after full configuration, via EC2 → Create image. ![AMI created](screenshots/ami-created.png) |
 | Service user, UID 10000–12000 | `webapps`, UID 10500 |
 | Web app on `php:8.5-apache` | Custom image, see `deploy/Dockerfile` |
-| Container can't run as root | Two layers: `USER appuser` in the Dockerfile, plus a runtime check in the entrypoint that exits if UID is 0. Tested with `docker run --user 0` ; it refuses, as required |
+| Container can't run as root | Two layers: `USER appuser` in the Dockerfile, plus a runtime check in the entrypoint that exits if UID is 0. Tested with `docker run --user 0` ; it refuses, as required. ![Root execution blocked](screenshots/root-blocked.png) |
 | No privileges, all dropped | `--cap-drop=ALL` on every app container |
-| No privilege escalation | `--security-opt no-new-privileges` |
-| systemd wrapper, boot-enabled | `deploy/systemd/webapp1.service`, `webapp2.service` |
+| No privilege escalation | `--security-opt no-new-privileges`. ![No new privileges](screenshots/No%20New%20Privileges.png) |
+| systemd wrapper, boot-enabled | `deploy/systemd/webapp1.service`, `webapp2.service`. ![Systemd wrapper](screenshots/Systemd%20wrapper.png) |
 | Container data on the data disk | Bind-mounted from `/data/webapps/...` |
-| Multiple containers, failover | Two identical containers on separate ports, each its own systemd unit with `Restart=always` |
-| Grafana, rootless, same user | Runs under `webapps`, same as everything else |
-| Prometheus, rootless, host + container metrics | `deploy/prometheus/prometheus.yml` ; scrapes node-exporter and cAdvisor |
-| Shutdown schedule | EventBridge Scheduler, nightly, IAM role scoped to `ec2:StopInstances` only |
+| Multiple containers, failover | Two identical containers on separate ports, each its own systemd unit with `Restart=always`. ![All containers running](screenshots/docker-ps-all-containers.png) |
+| Grafana, rootless, same user | Runs under `webapps`, same as everything else. ![Grafana host metrics](screenshots/grafana-host-metrics.png) |
+| Prometheus, rootless, host + container metrics | `deploy/prometheus/prometheus.yml` ; scrapes node-exporter and cAdvisor. ![Prometheus targets](screenshots/prometheus-targets.png) |
+| Shutdown schedule | EventBridge Scheduler, nightly, IAM role scoped to `ec2:StopInstances` only. ![EventBridge schedule rule](screenshots/EventBridge%20schedule%20Corn%20Rule.png) ![EventBridge target](screenshots/EventBridgeTarget.png) |
 
 ## The parts that didn't work first try
 
