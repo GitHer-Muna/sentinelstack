@@ -23,7 +23,7 @@ work that shows up in job requirements far more than it shows up in tutorials.
 | User namespaces enabled | Confirmed via `/proc/sys/user/max_user_namespaces`, subordinate UID/GID ranges set in `/etc/subuid` and `/etc/subgid` |
 | Docker starts on boot | `systemd --user` service + `loginctl enable-linger`; I stopped and restarted the whole instance to actually confirm this, not just assumed it. ![Docker starts on boot](screenshots/Docker%20starts%20on%20boot.png) |
 | SELinux enforcing | Rocky Linux ships this on by default ; checked with `sestatus` after launch. ![SELinux enforcing](screenshots/selinux-enforcing.png) |
-| Immutable AMI | Created after full configuration, via EC2 → Create image. ![AMI created](screenshots/ami-created.png) |
+| Immutable AMI | Created after full configuration, via EC2 → Create image. ![AMI created](screenshots/AMI.png) |
 | Service user, UID 10000–12000 | `webapps`, UID 10500 |
 | Web app on `php:8.5-apache` | Custom image, see `deploy/Dockerfile` |
 | Container can't run as root | Two layers: `USER appuser` in the Dockerfile, plus a runtime check in the entrypoint that exits if UID is 0. Tested with `docker run --user 0` ; it refuses, as required. ![Root execution blocked](screenshots/root-blocked.png) |
