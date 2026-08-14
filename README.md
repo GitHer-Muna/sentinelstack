@@ -21,7 +21,7 @@ work that shows up in job requirements far more than it shows up in tutorials.
 | EC2 instance, OS disk + data disk | Rocky Linux 9, 20GB root volume, separate 20GB volume mounted at `/data`. ![Two EBS volumes](screenshots/two-ebs-volumes.png) ![Two disks](screenshots/TwoDisk.png) |
 | Rootless Docker | Docker daemon runs under a dedicated non-root user; no root-owned daemon anywhere on the host |
 | User namespaces enabled | Confirmed via `/proc/sys/user/max_user_namespaces`, subordinate UID/GID ranges set in `/etc/subuid` and `/etc/subgid` |
-| Docker starts on boot | `systemd --user` service + `loginctl enable-linger`; I stopped and restarted the whole instance to actually confirm this, not just assumed it |
+| Docker starts on boot | `systemd --user` service + `loginctl enable-linger`; I stopped and restarted the whole instance to actually confirm this, not just assumed it. ![Docker starts on boot](screenshots/Docker%20starts%20on%20boot.png) |
 | SELinux enforcing | Rocky Linux ships this on by default ; checked with `sestatus` after launch. ![SELinux enforcing](screenshots/selinux-enforcing.png) |
 | Immutable AMI | Created after full configuration, via EC2 → Create image. ![AMI created](screenshots/ami-created.png) |
 | Service user, UID 10000–12000 | `webapps`, UID 10500 |
@@ -31,9 +31,9 @@ work that shows up in job requirements far more than it shows up in tutorials.
 | No privilege escalation | `--security-opt no-new-privileges`. ![No new privileges](screenshots/No%20New%20Privileges.png) |
 | systemd wrapper, boot-enabled | `deploy/systemd/webapp1.service`, `webapp2.service`. ![Systemd wrapper](screenshots/Systemd%20wrapper.png) |
 | Container data on the data disk | Bind-mounted from `/data/webapps/...` |
-| Multiple containers, failover | Two identical containers on separate ports, each its own systemd unit with `Restart=always`. ![All containers running](screenshots/docker-ps-all-containers.png) |
-| Grafana, rootless, same user | Runs under `webapps`, same as everything else. ![Grafana host metrics](screenshots/grafana-host-metrics.png) |
-| Prometheus, rootless, host + container metrics | `deploy/prometheus/prometheus.yml` ; scrapes node-exporter and cAdvisor. ![Prometheus targets](screenshots/prometheus-targets.png) |
+| Multiple containers, failover | Two identical containers on separate ports, each its own systemd unit with `Restart=always`. ![All containers running](screenshots/Docker%20starts%20on%20boot.png) |
+| Grafana, rootless, same user | Runs under `webapps`, same as everything else. ![Grafana host metrics](screenshots/grafana%20nodeexporterfullLive.png.png) |
+| Prometheus, rootless, host + container metrics | `deploy/prometheus/prometheus.yml` ; scrapes node-exporter and cAdvisor. ![Prometheus targets](screenshots/Prometheus-targetsuihealthup.png.png) ![Prometheus health up](screenshots/prometheus-healthupproof.png.png) |
 | Shutdown schedule | EventBridge Scheduler, nightly, IAM role scoped to `ec2:StopInstances` only. ![EventBridge schedule rule](screenshots/EventBridge%20schedule%20Corn%20Rule.png) ![EventBridge target](screenshots/EventBridgeTarget.png) |
 
 ## The parts that didn't work first try
